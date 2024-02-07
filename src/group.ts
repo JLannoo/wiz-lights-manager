@@ -5,10 +5,10 @@ import { ColorState } from "./messenger";
 export interface LightGroup {
 	setAlias(alias: string): void;
 
-    lightSwitch(state: boolean): void;
-    setBrightness(dimming: number): void;
-    setColor(params: ColorState): void;
-    setScene(sceneId: keyof typeof SCENES | number, speed: number): void;
+    lightSwitch(state: boolean): Promise<void>;
+    setBrightness(dimming: number): Promise<void>;
+    setColor(params: ColorState): Promise<void>;
+    setScene(sceneId: keyof typeof SCENES | number, speed: number): Promise<void>;
 
     logger: (message: string, ...args: any[]) => void;
 }
