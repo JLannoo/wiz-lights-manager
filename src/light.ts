@@ -131,7 +131,7 @@ export class WizLight implements WizLight {
 		
 		if(response){
 			const state = JSON.parse(response.msg).result;
-			const { rssi, sceneId, mac, src, ...rest } = state;
+			const { rssi, mac, src, ...rest } = state;
 			this.colorState = rest;
 			
 			return state;
