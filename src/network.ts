@@ -60,16 +60,16 @@ export async function awaitResponse(socket: Socket, timeout: number): Promise<{m
 }
 
 export async function sendAndAwaitResponse(message: string, ip: string, port: number, timeout: number) {
+	const server = dgram.createSocket("udp4");
 	try {
-		const server = dgram.createSocket("udp4");
 		server.send(message, port, ip);
 
 		const {msg, rinfo} = await awaitResponse(server, timeout);
 
-		server.close();
-
 		return {msg, rinfo};
 	} catch (error) {
 		return null;
+	} finally {
+		server.close();
 	}
 }
