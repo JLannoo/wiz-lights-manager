@@ -10,10 +10,13 @@ const LAMPS_PORT = 38899;
 export interface WizLightManager {
     searchLampsInNetwork(timeout?: number): Promise<LightGroup>;
 
+	getLightByIP(ip: string): WizLight | undefined;
+
 	getLightsByGroup(): Record<string, LightGroup>;
 	getGroupByAlias(alias: string): LightGroup | undefined;
+	
 	getLightsByRooms(): Record<string, LightGroup>;
-	getLightByIP(ip: string): WizLight | undefined;
+	getRoomByAlias(alias: string): LightGroup | undefined;
 
 	createCustomScene(name: string, procedure: (manager: WizLightManager) => Promise<void>): void;
 	runCustomScene(name: string): Promise<void>;
@@ -30,6 +33,7 @@ export class WizLightManager implements WizLightManager {
 
 	allLights: LightGroup = new LightGroup([], "all");
 	lightGroups: Record<string, LightGroup> = {};
+	rooms: Record<string, LightGroup> = {};
 	customScenes?: CustomScene[];
 	
 	constructor(cache?: LightCache){
@@ -70,6 +74,7 @@ export class WizLightManager implements WizLightManager {
 		this.logger(`Failed to initialize ${failed.length} lights (${failed.map(result => result.reason)})`);
 
 		this.lightGroups = this.getLightsByGroup();
+		this.rooms = this.getLightsByRooms();
 	}
 
 	/**
@@ -166,6 +171,17 @@ export class WizLightManager implements WizLightManager {
 		}
 
 		return rooms;
+	}
+
+	/**
+	 *	Returns a room by its previously set alias
+	 */
+	getRoomByAlias(alias: string){
+		for(const room of Object.values(this.rooms)){
+			if(room.alias === alias){
+				return room;
+			}
+		}
 	}
 
 	/**
