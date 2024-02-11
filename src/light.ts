@@ -77,6 +77,13 @@ export class WizLight implements WizLight {
 	}
 
 	async setState(params: Partial<WizLightState>){
+		// If the sceneId is 0, the API will return an error
+		// but sometimes it returns 0 and gets stored in the state
+		// so we need to remove before sending the message to the light
+		if("sceneId" in params && params.sceneId === 0){
+			delete params.sceneId;
+		}
+
 		this.colorState = {
 			...this.colorState,
 			// Any state change will turn the light on
