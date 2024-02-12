@@ -39,6 +39,7 @@ export class WizLight implements WizLight {
 	ip: string;
 	colorState: WizLightState;
 	systemConfig?: WizLightSystemConfig;
+	alias?: string;
 
 	rssi: number;
 

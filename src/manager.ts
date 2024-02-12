@@ -11,6 +11,7 @@ export interface WizLightManager {
     searchLampsInNetwork(timeout?: number): Promise<LightGroup>;
 
 	getLightByIP(ip: string): WizLight | undefined;
+	getLightByAlias(alias: string): WizLight | undefined;
 
 	getLightsByGroup(): Record<string, LightGroup>;
 	getGroupByAlias(alias: string): LightGroup | undefined;
@@ -189,6 +190,13 @@ export class WizLightManager implements WizLightManager {
 	 */
 	getLightByIP(ip: string){
 		return this.allLights.lights.find(light => light.ip === ip);
+	}
+
+	/**
+	 * Returns a light by its alias
+	 */
+	getLightByAlias(alias: string){
+		return this.allLights.lights.find(light => light.alias === alias);
 	}
 
 	/**
