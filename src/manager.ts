@@ -25,6 +25,11 @@ export interface WizLightManager {
 	logger: (...args: unknown[]) => void;
 }
 
+type LightManagerOptions = {
+	cache?: LightCache;
+	blacklistedIPs?: string[];
+}
+
 /**
  * A class to manage Wiz Smart Lights
  */
@@ -36,10 +41,13 @@ export class WizLightManager implements WizLightManager {
 	lightGroups: Record<string, LightGroup> = {};
 	rooms: Record<string, LightGroup> = {};
 	customScenes?: CustomScene[];
+
+	blacklistedIPs?: string[] = [];
 	
-	constructor(cache?: LightCache){
+	constructor(options: LightManagerOptions = {}){
 		this.localIP = getLocalIP();
-		this.cache = cache;
+		this.cache = options.cache;
+		this.blacklistedIPs = options.blacklistedIPs;
 		
 		this.logger = console.log.bind(null, `\x1b[35m[${this.constructor.name}]\x1b[0m`);
 	}
@@ -70,6 +78,9 @@ export class WizLightManager implements WizLightManager {
 			this.allLights.lights = this.allLights.lights.filter(light => {console.log(light.ip); return !failedIPs.includes(light.ip);});
 			await this.cache?.save(this.allLights.lights);
 		}
+
+		// Remove blacklisted lights
+		this.allLights.lights = this.allLights.lights.filter(light => !this.blacklistedIPs?.includes(light.ip));
 
 		this.logger(`Initialized with ${this.allLights.lights.length} lights`);
 		this.logger(`Failed to initialize ${failed.length} lights (${failed.map(result => result.reason)})`);
