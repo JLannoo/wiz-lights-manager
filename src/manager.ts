@@ -7,9 +7,18 @@ import { CustomScene } from "./customScene";
 
 const LAMPS_PORT = 38899;
 
+type getLightsOptions = {
+	ips: string[];
+	groupIds: string[];
+	groupAliases: string[];
+	roomIds: string[];
+	roomAliases: string[];
+}
+
 export interface WizLightManager {
     searchLampsInNetwork(timeout?: number): Promise<LightGroup>;
 
+	getLights(options?: getLightsOptions): Promise<LightGroup>;
 	getLightByIP(ip: string): WizLight | undefined;
 	getLightByAlias(alias: string): WizLight | undefined;
 
@@ -80,6 +89,10 @@ export class WizLightManager implements WizLightManager {
 		}
 
 		// Remove blacklisted lights
+		const blackListedLights = this.allLights.lights.filter(light => this.blacklistedIPs?.includes(light.ip));
+		if(blackListedLights.length){
+			this.logger(`Ignoring blacklisted lights: ${blackListedLights.map(light => light.ip).join(", ")}`);
+		}
 		this.allLights.lights = this.allLights.lights.filter(light => !this.blacklistedIPs?.includes(light.ip));
 
 		this.logger(`Initialized with ${this.allLights.lights.length} lights`);
@@ -208,6 +221,39 @@ export class WizLightManager implements WizLightManager {
 	 */
 	getLightByAlias(alias: string){
 		return this.allLights.lights.find(light => light.alias === alias);
+	}
+
+	/**
+	 * Returns a group of lights based on the filters provided
+	 * 
+	 * (The filters are OR'd together)
+	 */
+	async getLights(options: getLightsOptions){
+		const { ips, groupIds, groupAliases, roomIds, roomAliases } = options;
+
+		const lights = this.allLights.lights.filter(light => {
+			if(ips){
+				return ips.includes(light.ip);
+			}
+
+			if(groupIds){
+				return groupIds.includes(light.systemConfig?.groupId as string);
+			}
+
+			if(groupAliases){
+				return groupAliases.includes(this.lightGroups[light.systemConfig?.groupId as string]?.alias as string);
+			}
+
+			if(roomIds){
+				return roomIds.includes(light.systemConfig?.roomId as string);
+			}
+
+			if(roomAliases){
+				return roomAliases.includes(this.rooms[light.systemConfig?.roomId as string]?.alias as string);
+			}
+		});
+
+		return new LightGroup(lights, "custom");
 	}
 
 	/**
