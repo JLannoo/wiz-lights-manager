@@ -59,12 +59,34 @@ export async function awaitResponse(socket: Socket, timeout: number): Promise<{m
 	});
 }
 
+export async function retry<T>(send: Promise<T>, retries: number) {
+	for (let i = 0; i < retries; i++) {
+		try {
+			return await send;
+		} catch (error) {
+			if(error instanceof Error && error.message === "Timeout") {				
+				continue;
+			} else {
+				throw error;
+			}
+		}
+	}
+
+	return null;
+}
+
 export async function sendAndAwaitResponse(message: string, ip: string, port: number, timeout: number) {
 	const server = dgram.createSocket("udp4");
 	try {
 		server.send(message, port, ip);
 
-		const {msg, rinfo} = await awaitResponse(server, timeout);
+		const response = await retry(awaitResponse(server, timeout), 3);
+		if(!response) return null;
+
+		const {msg, rinfo} = response;
+
+		const messageType = JSON.parse(message.toString()).method;
+		console.log(`Received response to ${messageType} from ${rinfo.address}:${rinfo.port}`);
 
 		return {msg, rinfo};
 	} catch (error) {
