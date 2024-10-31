@@ -22,14 +22,14 @@ export function getLocalIP() {
 
 	// Get Wifi IP
 	const wifiIP = Object.entries(results).filter(([key, value]) => key.startsWith("Wi-Fi"));
-	if(wifiIP) {
+	if(wifiIP.length) {
 		return wifiIP[0][1][0];
 	}
 
-	// Get Ethernet IP
-	const ethernetIP = Object.keys(results).filter((key) => key.startsWith("Ethernet"));
-	if(ethernetIP) {
-		return ethernetIP[0];
+	// Get Ethernet IP	
+	const ethernetIP = Object.entries(results).filter(([key, value]) => key.startsWith("Ethernet"));
+	if(ethernetIP.length) {		
+		return ethernetIP[0][1][0];
 	}
 
 	// Get any IP
@@ -59,14 +59,12 @@ export async function awaitResponse(socket: Socket, timeout: number): Promise<{m
 	});
 }
 
-export async function retry<T>(send: Promise<T>, retries: number) {
+export async function retry<T>(callback: () => T, retries: number) {
 	for (let i = 0; i < retries; i++) {
 		try {
-			return await send;
+			return await callback();
 		} catch (error) {
-			if(error instanceof Error && error.message === "Timeout") {				
-				continue;
-			} else {
+			if(i == retries - 1) {
 				throw error;
 			}
 		}
@@ -80,7 +78,7 @@ export async function sendAndAwaitResponse(message: string, ip: string, port: nu
 	try {
 		server.send(message, port, ip);
 
-		const response = await retry(awaitResponse(server, timeout), 3);
+		const response = await retry(async () => awaitResponse(server, timeout), 3);
 		if(!response) return null;
 
 		const {msg, rinfo} = response;
